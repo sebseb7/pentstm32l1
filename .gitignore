@@ -1,0 +1,7 @@
+*.a
+*.o
+*.bin
+*.elf
+*.lst
+tools/stm32flash
+
