@@ -79,9 +79,9 @@ const char*  serial_get_setup_str(const serial_t *h);
 
 /* common helper functions */
 serial_baud_t serial_get_baud            (const unsigned int baud);
-const unsigned int serial_get_baud_int   (const serial_baud_t baud);
-const unsigned int serial_get_bits_int   (const serial_bits_t bits);
-const char         serial_get_parity_str (const serial_parity_t parity);
-const unsigned int serial_get_stopbit_int(const serial_stopbit_t stopbit);
+unsigned int serial_get_baud_int   (const serial_baud_t baud);
+unsigned int serial_get_bits_int   (const serial_bits_t bits);
+char         serial_get_parity_str (const serial_parity_t parity);
+unsigned int serial_get_stopbit_int(const serial_stopbit_t stopbit);
 
 #endif

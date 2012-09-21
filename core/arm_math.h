@@ -5394,7 +5394,7 @@ extern "C"
 	     /* Iniatilize output for below specified range as least output value of table */
 		 y = pYData[0];
 	  }
-	  else if(i >= S->nValues)
+	  else if((uint32_t)i >= S->nValues)
 	  {
 	  	  /* Iniatilize output for above specified range as last output value of table */
 	  	  y = pYData[S->nValues-1];	
@@ -5446,7 +5446,7 @@ extern "C"
     /* Index value calculation */
     index = ((x & 0xFFF00000) >> 20);
 
-	if(index >= (nValues - 1))
+	if((uint32_t)index >= (nValues - 1))
 	{
 		return(pYData[nValues - 1]);
 	}
@@ -5505,7 +5505,7 @@ extern "C"
     /* Index value calculation */
     index = ((x & 0xFFF00000) >> 20u); 
 
-	if(index >= (nValues - 1))
+	if((uint32_t)index >= (nValues - 1))
 	{
 		return(pYData[nValues - 1]);
 	}
@@ -5563,7 +5563,7 @@ extern "C"
     index = ((x & 0xFFF00000) >> 20u);
 
 
-    if(index >= (nValues - 1))
+    if((uint32_t)index >= (nValues - 1))
 	{
 		return(pYData[nValues - 1]);
 	}

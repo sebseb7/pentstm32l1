@@ -51,10 +51,10 @@ int main(void)
 	{
 		GPIOB->ODR           |=       1<<12;
 		GPIOB->ODR           &=       ~(1<<13);
-		Delay(1000);
+		Delay(55);
 		GPIOB->ODR           &=       ~(1<<12);
 		GPIOB->ODR           |=       1<<13;
-		Delay(1000);
+		Delay(55);
 	}
 
 }

@@ -4,8 +4,7 @@ PROJECT=template
 
 LSCRIPT=core/stm32_flash.ld
 
-OPTIMIZATION = -O2
-DEBUG = 
+OPTIMIZATION = -O1
 
 #########################################################################
 
@@ -16,16 +15,15 @@ LSTFILES= $(SRC:.c=.lst)
 HEADERS=$(wildcard core/*.h *.h)
 
 #  Compiler Options
-GCFLAGS=  $(OPTIMIZATION) -mthumb -Icore -I. -Idrivers  
-GCFLAGS+= -funsigned-char -Wundef -Wunreachable-code -Wstrict-prototypes
-GCFLAGS+= -mcpu=cortex-m3 -Wl,--gc-sections -fsingle-precision-constant -DARM_MATH_CM3 -DUSE_STDPERIPH_DRIVER 
-GCFLAGS+= -Wa,-adhlns=$(<:.c=.lst)
-GCFLAGS+= -ffreestanding -nostdlib -Wa,-adhlns=$(<:.c=.lst) -fno-math-errno -fdata-sections -ffunction-sections -Wl,--gc-sections
+GCFLAGS = -ffreestanding -std=gnu99 -mcpu=cortex-m3 -mthumb $(OPTIMIZATION) -I. -Icore -Wl,--gc-sections -DARM_MATH_CM3 -DUSE_STDPERIPH_DRIVER -nostdlib
+# Warnings
+GCFLAGS += -Wstrict-prototypes -Wundef -Wall -Wextra -Wunreachable-code  
+# Optimizazions
+GCFLAGS += -fsingle-precision-constant -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums -fno-builtin -ffunction-sections -fdata-sections -fno-common -fdata-sections -ffunction-sections
+# Debug stuff
+GCFLAGS += -Wa,-adhlns=$(<:.c=.lst),-gstabs -g 
+
 GCFLAGS+= -ISTM32L1_drivers/inc
-
-
-#1803               <Define>ARM_MATH_CM4, ARM_MATH_MATRIX_CHECK, ARM_MATH_ROUNDING, __FPU_PRESENT = 1</Define>
-# -ffunction-sections -fdata-sections -fmessage-length=0   -fno-builtin
 
 
 LDFLAGS = -mcpu=cortex-m3 -mthumb $(OPTIMIZATION) -nostartfiles --gc-sections  -T$(LSCRIPT) 
@@ -78,4 +76,4 @@ clean:
 #########################################################################
 
 flash: tools/stm32flash all
-	tools/stm32flash -e 255 -v -w  $(PROJECT).bin -g 0x0 /dev/cu.usbserial-AE018X8R
+	tools/stm32flash -b 115200 -e 255 -v -w  $(PROJECT).bin -g 0x0 /dev/cu.usbserial-AE018X8R
