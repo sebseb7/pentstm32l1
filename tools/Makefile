@@ -1,21 +1,20 @@
 CC = $(CROSS_COMPILE)gcc
-AR = $(CROSS_COMPILE)ar
 export CC
-export AR
 
-all:
-	$(MAKE) -C parsers
+all: stm32flash
+
+stm32flash:
 	$(CC) -o stm32flash -I./ \
 		main.c \
 		utils.c \
 		stm32.c \
 		serial_common.c \
 		serial_platform.c \
-		parsers/parsers.a \
+		parsers/binary.c \
+		parsers/hex.c \
 		stm32/stmreset_binary.c \
 		-Wall
 
 clean:
-	$(MAKE) -C parsers clean
 	rm -f stm32flash
 
