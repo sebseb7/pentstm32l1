@@ -1,7 +1,7 @@
 /*
   stm32flash - Open Source ST STM32 flash program for *nix
   Copyright (C) 2010 Geoffrey McRae <geoff@spacevs.com>
-..Copyright (C) 2011 Steve Markgraf <steve@steve-m.de>
+  Copyright (C) 2011 Steve Markgraf <steve@steve-m.de>
 
   This program is free software; you can redistribute it and/or
   modify it under the terms of the GNU General Public License
@@ -49,6 +49,7 @@ int		rd	 	= 0;
 int		wr		= 0;
 int		wu		= 0;
 int		npages		= 0xFF;
+int             spage           = 0;
 char		verify		= 0;
 int		retry		= 10;
 char		exec_flag	= 0;
@@ -159,7 +160,7 @@ int main(int argc, char* argv[]) {
 			goto close;
 		}
 
-		addr = stm->dev->fl_start;
+		addr = stm->dev->fl_start + (spage * stm->dev->fl_ps);
 		fprintf(stdout, "\x1B[s");
 		fflush(stdout);
 		while(addr < stm->dev->fl_end) {
@@ -202,9 +203,12 @@ int main(int argc, char* argv[]) {
 			goto close;
 		}
 
-		stm32_erase_memory(stm, npages);
+		if (!stm32_erase_memory(stm, spage, npages)) {
+			fprintf(stderr, "Failed to erase memory\n");
+			goto close;
+		}
 
-		addr = stm->dev->fl_start;
+		addr = stm->dev->fl_start + (spage * stm->dev->fl_ps);
 		fprintf(stdout, "\x1B[s");
 		fflush(stdout);
 		while(addr < stm->dev->fl_end && offset < size) {
@@ -296,7 +300,7 @@ close:
 
 int parse_options(int argc, char *argv[]) {
 	int c;
-	while((c = getopt(argc, argv, "b:r:w:e:vn:g:fchu")) != -1) {
+	while((c = getopt(argc, argv, "b:r:w:e:vn:g:fchus:")) != -1) {
 		switch(c) {
 			case 'b':
 				baudRate = serial_get_baud(strtoul(optarg, NULL, 0));
@@ -343,6 +347,9 @@ int parse_options(int argc, char *argv[]) {
 			case 'g':
 				exec_flag = 1;
 				execute   = strtoul(optarg, NULL, 0);
+				break;
+			case 's':
+				spage    = strtoul(optarg, NULL, 0);
 				break;
 
 			case 'f':
@@ -394,6 +401,7 @@ void show_help(char *name) {
 		"	-v		Verify writes\n"
 		"	-n count	Retry failed writes up to count times (default 10)\n"
 		"	-g address	Start execution at specified address (0 = flash start)\n"
+		"	-s start_page	Flash at specified page (0 = flash start)\n"
 		"	-f		Force binary parser\n"
 		"	-h		Show this help\n"
 		"	-c		Resume the connection (don't send initial INIT)\n"

@@ -28,6 +28,7 @@
 #define STM32_NACK	0x1F
 #define STM32_CMD_INIT	0x7F
 #define STM32_CMD_GET	0x00	/* get the version and command supported */
+#define STM32_CMD_EE	0x44	/* extended erase */
 
 struct stm32_cmd {
 	uint8_t get;
@@ -37,7 +38,6 @@ struct stm32_cmd {
 	uint8_t go;
 	uint8_t wm;
 	uint8_t er; /* this may be extended erase */
-//      uint8_t ee;
 	uint8_t wp;
 	uint8_t uw;
 	uint8_t rp;
@@ -46,13 +46,17 @@ struct stm32_cmd {
 
 /* device table */
 const stm32_dev_t devices[] = {
-	{0x412, "Low-density"      , 0x20000200, 0x20002800, 0x08000000, 0x08008000, 4, 1024, 0x1FFFF800, 0x1FFFF80F, 0x1FFFF000, 0x1FFFF800},
-	{0x410, "Medium-density"   , 0x20000200, 0x20005000, 0x08000000, 0x08020000, 4, 1024, 0x1FFFF800, 0x1FFFF80F, 0x1FFFF000, 0x1FFFF800},
-	{0x414, "High-density"     , 0x20000200, 0x20010000, 0x08000000, 0x08080000, 2, 2048, 0x1FFFF800, 0x1FFFF80F, 0x1FFFF000, 0x1FFFF800},
-	{0x416, "stm32L151"		   , 0x20000800, 0x20004000, 0x08000000, 0x08020000, 16, 256, 0x1FF80000, 0x1FF80020, 0x1FF00000, 0x1FF02000}, // from STM32 AN2606
-	{0x418, "Connectivity line", 0x20001000, 0x20010000, 0x08000000, 0x08040000, 2, 2048, 0x1FFFF800, 0x1FFFF80F, 0x1FFFB000, 0x1FFFF800},
-	{0x420, "Medium-density VL", 0x20000200, 0x20002000, 0x08000000, 0x08020000, 4, 1024, 0x1FFFF800, 0x1FFFF80F, 0x1FFFF000, 0x1FFFF800},
-	{0x430, "XL-density"       , 0x20000800, 0x20018000, 0x08000000, 0x08100000, 2, 2048, 0x1FFFF800, 0x1FFFF80F, 0x1FFFE000, 0x1FFFF800},
+	{0x412, "Low-density"       , 0x20000200, 0x20002800, 0x08000000, 0x08008000,  4, 1024, 0x1FFFF800, 0x1FFFF80F, 0x1FFFF000, 0x1FFFF800},
+	{0x410, "Medium-density"    , 0x20000200, 0x20005000, 0x08000000, 0x08020000,  4, 1024, 0x1FFFF800, 0x1FFFF80F, 0x1FFFF000, 0x1FFFF800},
+        {0x411, "STM32F2xx"         , 0x20002000, 0x20020000, 0x08000000, 0x08100000,  4, 16384, 0x1FFFC000, 0x1FFFC00F, 0x1FFF0000, 0x1FFF77DF},
+        {0x413, "STM32F4xx"         , 0x20002000, 0x20020000, 0x08000000, 0x08100000,  4, 16384, 0x1FFFC000, 0x1FFFC00F, 0x1FFF0000, 0x1FFF77DF},
+	{0x414, "High-density"      , 0x20000200, 0x20010000, 0x08000000, 0x08080000,  2, 2048, 0x1FFFF800, 0x1FFFF80F, 0x1FFFF000, 0x1FFFF800},
+	{0x416, "Medium-density ULP", 0x20000800, 0x20004000, 0x08000000, 0x08020000, 16,  256, 0x1FF80000, 0x1FF8000F, 0x1FF00000, 0x1FF01000},
+//	{0x416, "stm32L151"		    , 0x20000800, 0x20004000, 0x08000000, 0x08020000, 16,  256, 0x1FF80000, 0x1FF80020, 0x1FF00000, 0x1FF02000}, // from STM32 AN2606
+	{0x418, "Connectivity line" , 0x20001000, 0x20010000, 0x08000000, 0x08040000,  2, 2048, 0x1FFFF800, 0x1FFFF80F, 0x1FFFB000, 0x1FFFF800},
+	{0x420, "Medium-density VL" , 0x20000200, 0x20002000, 0x08000000, 0x08020000,  4, 1024, 0x1FFFF800, 0x1FFFF80F, 0x1FFFF000, 0x1FFFF800},
+	{0x428, "High-density VL"   , 0x20000200, 0x20008000, 0x08000000, 0x08080000,  2, 2048, 0x1FFFF800, 0x1FFFF80F, 0x1FFFF000, 0x1FFFF800},
+	{0x430, "XL-density"        , 0x20000800, 0x20018000, 0x08000000, 0x08100000,  2, 2048, 0x1FFFF800, 0x1FFFF80F, 0x1FFFE000, 0x1FFFF800},
 	{0x0}
 };
 
@@ -179,6 +183,12 @@ stm32_t* stm32_init(const serial_t *serial, const char init) {
 	while(stm->dev->id != 0x00 && stm->dev->id != stm->pid)
 		++stm->dev;
 
+	if (!stm->dev->id) {
+		fprintf(stderr, "Unknown/unsupported device (Device ID: 0x%03x)\n", stm->pid);
+		stm32_close(stm);
+		return NULL;
+	}
+
 	return stm;
 }
 
@@ -258,16 +268,68 @@ char stm32_wunprot_memory(const stm32_t *stm) {
 	return 1;
 }
 
-char stm32_erase_memory(const stm32_t *stm, uint8_t pages) {
-	if (!stm32_send_command(stm, stm->cmd->er)) return 0;
+char stm32_erase_memory(const stm32_t *stm, uint8_t spage, uint8_t pages) {
+	if (!stm32_send_command(stm, stm->cmd->er)) {
+		fprintf(stderr, "Can't initiate chip erase!\n");
+		return 0;
+	}
+
+	/* The erase command reported by the bootloader is either 0x43 or 0x44 */
+	/* 0x44 is Extended Erase, a 2 byte based protocol and needs to be handled differently. */
+	if (stm->cmd->er == STM32_CMD_EE) {
+ 		/* Not all chips using Extended Erase support mass erase */
+ 		/* Currently known as not supporting mass erase is the Ultra Low Power STM32L15xx range */
+ 		/* So if someone has not overridden the default, but uses one of these chips, take it out of */
+ 		/* mass erase mode, so it will be done page by page. This maximum might not be correct either! */
+
+		if (stm->pid == 0x416 && pages == 0xFF) pages = 0xF8; /* works for the STM32L152RB with 128Kb flash */
+
+		if (pages == 0xFF) {
+			stm32_send_byte(stm, 0xFF);
+			stm32_send_byte(stm, 0xFF); // 0xFFFF the magic number for mass erase
+			stm32_send_byte(stm, 0x00); // 0x00 the XOR of those two bytes as a checksum
+			if (stm32_read_byte(stm) != STM32_ACK) {
+				fprintf(stderr, "Mass erase failed. Try specifying the number of pages to be erased.\n");
+				return 0;
+			}
+			return 1;
+		}
+
+		uint16_t pg_num;
+		uint8_t pg_byte;
+ 		uint8_t cs = 0;
+ 
+ 		stm32_send_byte(stm, pages >> 8); // Number of pages to be erased, two bytes, MSB first
+ 		stm32_send_byte(stm, pages & 0xFF);
+ 
+ 		for (pg_num = 0; pg_num <= pages; pg_num++) {
+
+			pg_byte = pg_num >> 8;
+ 			cs ^= pg_byte;
+ 			stm32_send_byte(stm, pg_byte);
+ 			pg_byte = pg_num & 0xFF;
+ 			cs ^= pg_byte;
+ 			stm32_send_byte(stm, pg_byte);
+ 		}
+ 		stm32_send_byte(stm, 0x00);  // Ought to need to hand over a valid checksum here...but 0 seems to work!
+ 	
+ 		if (stm32_read_byte(stm) != STM32_ACK) {
+ 			fprintf(stderr, "Page-by-page erase failed. Check the maximum pages your device supports.\n");
+			return 0;
+ 		}
+
+ 		return 1;
+	}
+
+	/* And now the regular erase (0x43) for all other chips */
 	if (pages == 0xFF) {
 		return stm32_send_command(stm, 0xFF);
 	} else {
 		uint8_t cs = 0;
 		uint8_t pg_num;
-		stm32_send_byte(stm, pages);
-		cs ^= pages;
-		for (pg_num = 0; pg_num <= pages; pg_num++) {
+		stm32_send_byte(stm, pages-1);
+		cs ^= (pages-1);
+		for (pg_num = spage; pg_num < (pages + spage); pg_num++) {
 			stm32_send_byte(stm, pg_num);
 			cs ^= pg_num;
 		}
