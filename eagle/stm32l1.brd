@@ -1023,7 +1023,7 @@ design rules under a new name.</description>
 <via x="6.275" y="12.075" extent="1-16" drill="0.5"/>
 <via x="7.8" y="16.225" extent="1-16" drill="0.5"/>
 <via x="7.8" y="19.6" extent="1-16" drill="0.5"/>
-<via x="15.125" y="20.1" extent="1-16" drill="0.5"/>
+<via x="15.025" y="19.2" extent="1-16" drill="0.5"/>
 <via x="17.225" y="9.125" extent="1-16" drill="0.5"/>
 <via x="19.05" y="17.925" extent="1-16" drill="0.5"/>
 <via x="15.825" y="14.95" extent="1-16" drill="0.5"/>
