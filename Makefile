@@ -16,18 +16,20 @@ LSTFILES= $(SRC:.c=.lst)
 HEADERS=$(wildcard core/*.h *.h)
 
 #  Compiler Options
-GCFLAGS=  $(OPTIMIZATION) -mthumb -Icore -I. 
+GCFLAGS=  $(OPTIMIZATION) -mthumb -Icore -I. -Idrivers  
 GCFLAGS+= -funsigned-char -Wundef -Wunreachable-code -Wstrict-prototypes
-GCFLAGS+= -mcpu=cortex-m3 -Wl,--gc-sections -fsingle-precision-constant -DARM_MATH_CM3 
+GCFLAGS+= -mcpu=cortex-m3 -Wl,--gc-sections -fsingle-precision-constant -DARM_MATH_CM3 -DUSE_STDPERIPH_DRIVER 
 GCFLAGS+= -Wa,-adhlns=$(<:.c=.lst)
-GCFLAGS+= -ffreestanding -nostdlib -Wa,-adhlns=$(<:.c=.lst) -fno-math-errno
+GCFLAGS+= -ffreestanding -nostdlib -Wa,-adhlns=$(<:.c=.lst) -fno-math-errno -fdata-sections -ffunction-sections -Wl,--gc-sections
+GCFLAGS+= -ISTM32L1_drivers/inc
 
 
 #1803               <Define>ARM_MATH_CM4, ARM_MATH_MATRIX_CHECK, ARM_MATH_ROUNDING, __FPU_PRESENT = 1</Define>
 # -ffunction-sections -fdata-sections -fmessage-length=0   -fno-builtin
 
 
-LDFLAGS = -mcpu=cortex-m3 -mthumb $(OPTIMIZATION) -nostartfiles  -T$(LSCRIPT) 
+LDFLAGS = -mcpu=cortex-m3 -mthumb $(OPTIMIZATION) -nostartfiles --gc-sections  -T$(LSCRIPT) 
+LDFLAGS+= -LSTM32L1_drivers/build -lSTM32L1xx_drivers
 
 
 #  Compiler/Assembler Paths
@@ -39,9 +41,11 @@ SIZE = arm-none-eabi-size
 
 #########################################################################
 
-all: $(PROJECT).bin Makefile stats
+all: STM32L1_drivers/build/libSTM32L1_drivers.a $(PROJECT).bin Makefile stats
 #	arm-none-eabi-objdump -d $(PROJECT).elf > out.dump
 
+STM32L1_drivers/build/libSTM32L1_drivers.a:
+	make -C STM32L1_drivers/build
 
 tools/stm32flash:
 	make -C tools
@@ -60,6 +64,7 @@ clean:
 	$(REMOVE) $(LSTFILES)
 	$(REMOVE) $(PROJECT).bin
 	$(REMOVE) $(PROJECT).elf
+	make -C STM32L1_drivers/build clean
 	make -C tools clean
 
 #########################################################################
