@@ -16,7 +16,7 @@ LSTFILES= $(SRC:.c=.lst)
 HEADERS=$(wildcard core/*.h *.h)
 
 #  Compiler Options
-GCFLAGS=  -g $(OPTIMIZATION) -mlittle-endian -mthumb -Icore -I. 
+GCFLAGS=  $(OPTIMIZATION) -mthumb -Icore -I. 
 GCFLAGS+= -funsigned-char -Wundef -Wunreachable-code -Wstrict-prototypes
 GCFLAGS+= -mcpu=cortex-m3 -Wl,--gc-sections -fsingle-precision-constant -DARM_MATH_CM3 
 GCFLAGS+= -Wa,-adhlns=$(<:.c=.lst)
@@ -73,6 +73,4 @@ clean:
 #########################################################################
 
 flash: tools/stm32flash all
-
-	tools/stm32flash -w $(PROJECT).bin -v -g 0x0 /dev/ttyS0
-
+	tools/stm32flash -e 255 -v -w  $(PROJECT).bin -g 0x0 /dev/cu.usbserial-AE018X8R
